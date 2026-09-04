@@ -1729,10 +1729,10 @@ function Feed({ session, lang, colors, isDark, searchTerm, viewMode, feedTab, si
       const to = from + POSTS_PER_PAGE - 1
 
       const { data, error } = await supabase
-        .from('posts')
-        .select('*, profiles(name, full_name, avatar_url), likes(type), comments(id), post_views(id)')
-        .order('created_at', { ascending: false })
-        .range(from, to)
+  .from('posts')
+  .select('*, profiles(name, full_name, avatar_url), likes(type), comments(id)')
+  .order('created_at', { ascending: false })
+  .range(from, to);
 
       if (!error) {
         const newPosts = data || []
