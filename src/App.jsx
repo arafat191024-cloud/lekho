@@ -1668,7 +1668,6 @@ function Feed({ session, lang, colors, isDark, searchTerm, viewMode, feedTab, si
           const { data } = await supabase
             .from('posts')
             .select('*, profiles(name, full_name, avatar_url), likes(type), comments(id), post_views(id)')
-            .in('author_id', userIds)
 
           const ranked = applySmartRanking(data || [])
           setPosts(ranked)
