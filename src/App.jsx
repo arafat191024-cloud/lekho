@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, memo }
 import { translations } from './translations'
 import { supabase } from './supabaseClient'
 import { containsProfanity } from './profanityFilter'
@@ -6,7 +6,32 @@ import ProfilePage from './ProfilePage'
 import Logo from './Logo'
 
 const POSTS_PER_PAGE = 10
+const POST_FIELDS = 'id, author_id, title, content, category, created_at, original_post_id, profiles(name, full_name, avatar_url)'
 const ADMIN_EMAILS = ['ahariyan173@gmail.com', 'arafatofficial2242@gmail.com']
+
+function navUrl(s) {
+  const params = new URLSearchParams()
+  if (s.singlePostId) params.set('post', s.singlePostId)
+  else if (s.view && s.view !== 'feed') {
+    params.set('view', s.view)
+    if (s.viewedUserId) params.set('u', s.viewedUserId)
+  }
+  const q = params.toString()
+  return q ? `${window.location.pathname}?${q}` : window.location.pathname
+}
+
+function parseNavFromLocation() {
+  const params = new URLSearchParams(window.location.search)
+  const postId = params.get('post')
+  const viewParam = params.get('view')
+  const userId = params.get('u')
+  if (postId) return { view: 'feed', singlePostId: postId, viewedUserId: null }
+  if (viewParam === 'profile') return { view: 'profile', singlePostId: null, viewedUserId: userId || null }
+  if (viewParam === 'notifications' || viewParam === 'saved') {
+    return { view: viewParam, singlePostId: null, viewedUserId: null }
+  }
+  return { view: 'feed', singlePostId: null, viewedUserId: null }
+}
 
 const CATEGORIES = [
   { key: 'literature', bn: 'সাহিত্য', en: 'Literature & Writing' },
@@ -477,6 +502,7 @@ function App() {
   const [viewedUserId, setViewedUserId] = useState(null)
   const [singlePostId, setSinglePostId] = useState(null)
 
+  const [searchInput, setSearchInput] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [showNavMenu, setShowNavMenu] = useState(false)
   const [notifications, setNotifications] = useState([])
@@ -487,8 +513,6 @@ function App() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [showAdminModal, setShowAdminModal] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState(null)
-
-  const [showExitConfirm, setShowExitConfirm] = useState(false)
 
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)
