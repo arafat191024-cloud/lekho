@@ -2084,7 +2084,7 @@ function PostCard({ post, session, lang, colors, isDark, showToast, onChanged, o
     setMyReaction(data ? data.type : null)
   }
 
-  const handleReaction = async (type) => {
+const handleReaction = async (type) => {
     setShowReactionPicker(false)
     const prevReaction = myReaction
 
@@ -2104,6 +2104,16 @@ function PostCard({ post, session, lang, colors, isDark, showToast, onChanged, o
       await supabase
         .from('likes')
         .insert({ post_id: post.id, user_id: session.user.id, type })
+
+      // 👉 নতুন রিয়াকশন বা লাইক দিলে নোটিফিকেশন পাঠানো (নিজের পোস্টে নিজে দিলে যাবে না)
+      if (post.author_id !== session.user.id && (type === 'love' || type === 'insightful')) {
+        await supabase.from('notifications').insert({
+          user_id: post.author_id,
+          actor_id: session.user.id,
+          type: type, // 'love' বা 'insightful'
+          post_id: post.id
+        })
+      }
     }
     loadReactions()
   }
@@ -2133,7 +2143,7 @@ function PostCard({ post, session, lang, colors, isDark, showToast, onChanged, o
     setComments(data || [])
   }
 
-  const handleAddComment = async (e) => {
+const handleAddComment = async (e) => {
     e.preventDefault()
     if (!newComment.trim()) return
 
@@ -2151,6 +2161,16 @@ function PostCard({ post, session, lang, colors, isDark, showToast, onChanged, o
     if (!error) {
       setNewComment('')
       loadComments()
+
+      // 👉 কমেন্ট সফলভাবে জমা হওয়ার পর নোটিফিকেশন পাঠানো (নিজের পোস্টে নিজে কমেন্ট করলে যাবে না)
+      if (post.author_id !== session.user.id) {
+        await supabase.from('notifications').insert({
+          user_id: post.author_id,
+          actor_id: session.user.id,
+          type: 'comment',
+          post_id: post.id
+        })
+      }
     } else {
       showToast('Error: ' + error.message, 'error')
     }
