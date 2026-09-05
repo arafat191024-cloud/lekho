@@ -142,13 +142,11 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
   }
 
   const loadFollowData = async () => {
-    // ফলোয়ার্স কাউন্ট
     const { count: followers } = await supabase
       .from('follows')
       .select('*', { count: 'exact', head: true })
       .eq('following_id', profileId)
 
-    // ফলোয়িং কাউন্ট
     const { count: following } = await supabase
       .from('follows')
       .select('*', { count: 'exact', head: true })
@@ -157,7 +155,6 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
     setFollowersCount(followers || 0)
     setFollowingCount(following || 0)
 
-    // চেক করা বর্তমান ইউজার এই প্রোফাইলকে ফলো করে কি না
     if (currentUserId && profileId && currentUserId !== profileId) {
       const { data } = await supabase
         .from('follows')
@@ -176,7 +173,6 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
     if (!currentUserId || isOwner) return
 
     if (isFollowing) {
-      // আনফলো লজিক
       setIsFollowing(false)
       setFollowersCount(c => Math.max(0, c - 1))
 
@@ -186,7 +182,6 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
         .eq('follower_id', currentUserId)
         .eq('following_id', profileId)
     } else {
-      // ফলো লজিক
       setIsFollowing(true)
       setFollowersCount(c => c + 1)
 
@@ -200,8 +195,7 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
         type: 'follow'
       })
     }
-    // সার্ভার থেকে সঠিক ডাটা রি-সিঙ্ক করার জন্য
-    loadFollowData()
+    // loadFollowData() এখানে আর কল করা হচ্ছে না, ফলে স্টেট ইনস্ট্যান্ট ঠিক থাকবে
   }
 
   const handleUpdateAvatar = async (newUrl) => {
@@ -273,7 +267,6 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
 
   return (
     <div>
-      {/* প্রোফাইল হেডার কার্ড */}
       <div style={{
         background: colors.cardBg,
         border: `1px solid ${colors.cardBorder}`,
@@ -481,7 +474,6 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
         )}
       </div>
 
-      {/* অবতার সিলেক্টর মোডাল */}
       {showAvatarPicker && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -607,7 +599,6 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
         </div>
       )}
 
-      {/* ইউজারের পূর্ণাঙ্গ পোস্ট লিস্ট (PostCard সহ) */}
       <div>
         <h3 style={{ margin: '14px 0 10px', fontSize: '16px', color: colors.text }}>
           📝 {lang === 'bn' ? 'পোস্টসমূহ' : 'Posts'} ({userPosts.length})
