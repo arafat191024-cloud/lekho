@@ -105,6 +105,8 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
   const [followersCount, setFollowersCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
   const [isFollowing, setIsFollowing] = useState(false)
+  const [followBusy, setFollowBusy] = useState(false)
+  const [postsLoading, setPostsLoading] = useState(true)
 
   useEffect(() => {
     if (profileId) {
@@ -132,6 +134,7 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
   }
 
   const loadUserPosts = async () => {
+    setPostsLoading(true)
     const { data } = await supabase
       .from('posts')
       .select('*, profiles(name, full_name, avatar_url)')
@@ -139,6 +142,7 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
       .order('created_at', { ascending: false })
 
     setUserPosts(data || [])
+    setPostsLoading(false)
   }
 
   const loadFollowData = async () => {
@@ -170,32 +174,48 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
   }
 
   const handleFollowToggle = async () => {
-    if (!currentUserId || isOwner) return
+    if (!currentUserId || isOwner || followBusy) return
+
+    setFollowBusy(true)
 
     if (isFollowing) {
       setIsFollowing(false)
       setFollowersCount(c => Math.max(0, c - 1))
 
-      await supabase
+      const { error } = await supabase
         .from('follows')
         .delete()
         .eq('follower_id', currentUserId)
         .eq('following_id', profileId)
+
+      if (error) {
+        setIsFollowing(true)
+        setFollowersCount(c => c + 1)
+        alert('Error: ' + error.message)
+      }
     } else {
       setIsFollowing(true)
       setFollowersCount(c => c + 1)
 
-      await supabase
+      const { error } = await supabase
         .from('follows')
         .insert({ follower_id: currentUserId, following_id: profileId })
 
-      await supabase.from('notifications').insert({
-        user_id: profileId,
-        actor_id: currentUserId,
-        type: 'follow'
-      })
+      if (error) {
+        setIsFollowing(false)
+        setFollowersCount(c => Math.max(0, c - 1))
+        alert('Error: ' + error.message)
+      } else {
+        // Client fallback; DB trigger also creates (deduped)
+        await supabase.from('notifications').insert({
+          user_id: profileId,
+          actor_id: currentUserId,
+          type: 'follow'
+        })
+      }
     }
-    // loadFollowData() এখানে আর কল করা হচ্ছে না, ফলে স্টেট ইনস্ট্যান্ট ঠিক থাকবে
+
+    setFollowBusy(false)
   }
 
   const handleUpdateAvatar = async (newUrl) => {
@@ -254,7 +274,45 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
     return matchesCategory && matchesQuery
   })
 
-  if (loading) return <p style={{ textAlign: 'center', color: colors.textMuted, marginTop: '30px' }}>Loading profile...</p>
+  if (loading) {
+    return (
+      <div style={{ animation: 'pulse 1.5s infinite ease-in-out' }}>
+        <div style={{
+          background: colors.cardBg,
+          border: `1px solid ${colors.cardBorder}`,
+          borderRadius: '12px',
+          padding: '20px 16px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div style={{ width: '76px', height: '76px', borderRadius: '50%', background: isDark ? '#2a2b30' : '#e2e8f0' }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ width: '160px', height: '18px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0', marginBottom: '10px' }} />
+              <div style={{ width: '100px', height: '12px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0', marginBottom: '14px' }} />
+              <div style={{ width: '90%', height: '12px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0', marginBottom: '6px' }} />
+              <div style={{ width: '70%', height: '12px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0' }} />
+            </div>
+          </div>
+        </div>
+        {[0, 1].map(i => (
+          <div key={i} style={{
+            background: colors.cardBg,
+            border: `1px solid ${colors.cardBorder}`,
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '14px'
+          }}>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: isDark ? '#2a2b30' : '#e2e8f0' }} />
+              <div style={{ width: '120px', height: '14px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0', marginTop: '10px' }} />
+            </div>
+            <div style={{ width: '80%', height: '14px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0', marginBottom: '8px' }} />
+            <div style={{ width: '95%', height: '12px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0' }} />
+          </div>
+        ))}
+      </div>
+    )
+  }
   if (!profile) return <p style={{ textAlign: 'center', color: colors.textMuted, marginTop: '30px' }}>Profile not found.</p>
 
   const joinedDate = profile.created_at
@@ -383,6 +441,7 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
               ) : (
                 <button
                   onClick={handleFollowToggle}
+                  disabled={followBusy}
                   style={{
                     background: isFollowing ? 'transparent' : '#0066cc',
                     color: isFollowing ? colors.text : '#fff',
@@ -391,10 +450,17 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
                     padding: '5px 16px',
                     fontSize: '13px',
                     fontWeight: 'bold',
-                    cursor: 'pointer'
+                    cursor: followBusy ? 'wait' : 'pointer',
+                    opacity: followBusy ? 0.7 : 1,
+                    minWidth: '110px',
+                    transition: 'opacity 0.15s, background 0.15s'
                   }}
                 >
-                  {isFollowing ? (lang === 'bn' ? 'ফলোয়িং ✓' : 'Following ✓') : (lang === 'bn' ? '+ ফলো করুন' : '+ Follow')}
+                  {followBusy
+                    ? '...'
+                    : isFollowing
+                      ? (lang === 'bn' ? 'ফলোয়িং ✓' : 'Following ✓')
+                      : (lang === 'bn' ? '+ ফলো করুন' : '+ Follow')}
                 </button>
               )}
             </div>
@@ -604,7 +670,22 @@ export default function ProfilePage({ session, lang, theme, targetUserId, PostCa
           📝 {lang === 'bn' ? 'পোস্টসমূহ' : 'Posts'} ({userPosts.length})
         </h3>
 
-        {userPosts.length === 0 ? (
+        {postsLoading ? (
+          <div style={{ animation: 'pulse 1.5s infinite ease-in-out' }}>
+            {[0, 1].map(i => (
+              <div key={i} style={{
+                background: colors.cardBg,
+                border: `1px solid ${colors.cardBorder}`,
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '14px'
+              }}>
+                <div style={{ width: '70%', height: '14px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0', marginBottom: '8px' }} />
+                <div style={{ width: '95%', height: '12px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0' }} />
+              </div>
+            ))}
+          </div>
+        ) : userPosts.length === 0 ? (
           <p style={{ color: colors.textMuted, fontSize: '13px' }}>
             {lang === 'bn' ? 'এখনো কোনো পোস্ট করা হয়নি।' : 'No posts yet.'}
           </p>

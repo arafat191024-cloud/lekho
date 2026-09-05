@@ -86,6 +86,18 @@ const playPopSound = () => {
   } catch (e) {}
 }
 
+function SkeletonBone({ width, height, radius = '4px', isDark, style = {} }) {
+  return (
+    <div style={{
+      width,
+      height,
+      borderRadius: radius,
+      background: isDark ? '#2a2b30' : '#e2e8f0',
+      ...style
+    }} />
+  )
+}
+
 function SkeletonPostCard({ colors, isDark }) {
   return (
     <div style={{
@@ -98,13 +110,87 @@ function SkeletonPostCard({ colors, isDark }) {
       textAlign: 'left'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: isDark ? '#2a2b30' : '#e2e8f0' }} />
-        <div style={{ width: '120px', height: '14px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0' }} />
+        <SkeletonBone width="36px" height="36px" radius="50%" isDark={isDark} />
+        <SkeletonBone width="120px" height="14px" isDark={isDark} />
       </div>
-      <div style={{ width: '60%', height: '16px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0', marginBottom: '8px' }} />
-      <div style={{ width: '95%', height: '12px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0', marginBottom: '6px' }} />
-      <div style={{ width: '80%', height: '12px', borderRadius: '4px', background: isDark ? '#2a2b30' : '#e2e8f0', marginBottom: '12px' }} />
+      <SkeletonBone width="60%" height="16px" isDark={isDark} style={{ marginBottom: '8px' }} />
+      <SkeletonBone width="95%" height="12px" isDark={isDark} style={{ marginBottom: '6px' }} />
+      <SkeletonBone width="80%" height="12px" isDark={isDark} style={{ marginBottom: '12px' }} />
+      <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+        <SkeletonBone width="56px" height="28px" radius="8px" isDark={isDark} />
+        <SkeletonBone width="56px" height="28px" radius="8px" isDark={isDark} />
+        <SkeletonBone width="56px" height="28px" radius="8px" isDark={isDark} />
+      </div>
     </div>
+  )
+}
+
+function SkeletonNotificationRow({ colors, isDark }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      padding: '12px 14px',
+      borderRadius: '10px',
+      border: `1px solid ${colors.cardBorder}`,
+      background: colors.cardBg,
+      animation: 'pulse 1.5s infinite ease-in-out',
+      marginBottom: '8px'
+    }}>
+      <SkeletonBone width="42px" height="42px" radius="50%" isDark={isDark} />
+      <div style={{ flex: 1 }}>
+        <SkeletonBone width="70%" height="13px" isDark={isDark} style={{ marginBottom: '8px' }} />
+        <SkeletonBone width="40%" height="11px" isDark={isDark} />
+      </div>
+    </div>
+  )
+}
+
+function AppBootLoader({ isDark }) {
+  const bg = isDark ? '#121316' : '#f1f5f9'
+  const card = isDark ? '#191a1d' : '#ffffff'
+  const border = isDark ? '#2e3035' : '#cbd5e1'
+  const bone = isDark ? '#2a2b30' : '#e2e8f0'
+  return (
+    <div style={{ minHeight: '100vh', background: bg, padding: '24px 16px', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '640px', margin: '0 auto', animation: 'pulse 1.5s infinite ease-in-out' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: bone }} />
+          <div style={{ width: '100px', height: '22px', borderRadius: '6px', background: bone }} />
+        </div>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: '12px', padding: '16px', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bone }} />
+              <div style={{ width: '120px', height: '14px', borderRadius: '4px', background: bone, marginTop: '10px' }} />
+            </div>
+            <div style={{ width: '60%', height: '16px', borderRadius: '4px', background: bone, marginBottom: '8px' }} />
+            <div style={{ width: '95%', height: '12px', borderRadius: '4px', background: bone, marginBottom: '6px' }} />
+            <div style={{ width: '80%', height: '12px', borderRadius: '4px', background: bone }} />
+          </div>
+        ))}
+        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }`}</style>
+      </div>
+    </div>
+  )
+}
+
+function InlineSpinner({ size = 16, color = '#0066cc' }) {
+  return (
+    <span
+      aria-hidden
+      style={{
+        display: 'inline-block',
+        width: size,
+        height: size,
+        border: `2px solid ${color}`,
+        borderTopColor: 'transparent',
+        borderRadius: '50%',
+        animation: 'lekhoSpin 0.7s linear infinite',
+        verticalAlign: 'middle'
+      }}
+    />
   )
 }
 
@@ -395,6 +481,8 @@ function App() {
   const [showNavMenu, setShowNavMenu] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [unreadNotifCount, setUnreadNotifCount] = useState(0)
+  const [notificationsLoading, setNotificationsLoading] = useState(false)
+  const unreadNotifCountRef = useRef(0)
 
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [showAdminModal, setShowAdminModal] = useState(false)
@@ -513,28 +601,110 @@ function App() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-      if (session) loadNotifications(session.user.id)
-    })
+    let mounted = true
+    let notifChannel = null
 
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+    const bootstrap = async () => {
+      const { data: { session: existing } } = await supabase.auth.getSession()
+      if (!mounted) return
+      setSession(existing)
+      setLoading(false)
+      if (existing) {
+        loadNotifications(existing.user.id)
+        notifChannel = subscribeToNotifications(existing.user.id)
+      }
+    }
+
+    bootstrap()
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!mounted) return
+
       if (event === 'PASSWORD_RECOVERY') {
         setIsPasswordRecovery(true)
       }
-      setSession(session)
-      if (session) loadNotifications(session.user.id)
+
+      if (event === 'SIGNED_OUT') {
+        setSession(null)
+        setNotifications([])
+        setUnreadNotifCount(0)
+        unreadNotifCountRef.current = 0
+        if (notifChannel) {
+          supabase.removeChannel(notifChannel)
+          notifChannel = null
+        }
+        return
+      }
+
+      setSession(nextSession)
+
+      if (nextSession?.user) {
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') {
+          loadNotifications(nextSession.user.id)
+        }
+        if (!notifChannel && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
+          notifChannel = subscribeToNotifications(nextSession.user.id)
+        }
+      }
     })
 
-    return () => listener.subscription.unsubscribe()
+    const refreshOnFocus = () => {
+      if (document.visibilityState !== 'visible') return
+      supabase.auth.getSession().then(({ data: { session: s } }) => {
+        if (!mounted) return
+        if (s) {
+          setSession(s)
+          loadNotifications(s.user.id)
+        }
+      })
+    }
+
+    document.addEventListener('visibilitychange', refreshOnFocus)
+    window.addEventListener('focus', refreshOnFocus)
+
+    const pollId = setInterval(() => {
+      supabase.auth.getSession().then(({ data: { session: s } }) => {
+        if (s?.user) loadNotifications(s.user.id, { silent: true })
+      })
+    }, 45000)
+
+    return () => {
+      mounted = false
+      listener.subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', refreshOnFocus)
+      window.removeEventListener('focus', refreshOnFocus)
+      clearInterval(pollId)
+      if (notifChannel) supabase.removeChannel(notifChannel)
+    }
   }, [])
 
-const loadNotifications = async (userId) => {
+  const subscribeToNotifications = (userId) => {
+    try {
+      return supabase
+        .channel(`lekho-notif-${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${userId}`
+          },
+          () => loadNotifications(userId, { silent: true })
+        )
+        .subscribe()
+    } catch {
+      return null
+    }
+  }
+
+  const loadNotifications = async (userId, { silent = false } = {}) => {
     const uid = userId || session?.user?.id
     if (!uid) return
 
-    const { data } = await supabase
+    if (!silent) setNotificationsLoading(true)
+
+    const { data, error } = await supabase
       .from('notifications')
       .select(`
         *,
@@ -545,11 +715,19 @@ const loadNotifications = async (userId) => {
       .order('created_at', { ascending: false })
       .limit(50)
 
+    if (!silent) setNotificationsLoading(false)
+
+    if (error) {
+      console.warn('[Lekho] notifications load failed:', error.message)
+      return
+    }
+
     if (data) {
-      const prevUnread = unreadNotifCount
+      const prevUnread = unreadNotifCountRef.current
       const unread = data.filter(n => !n.is_read).length
       setNotifications(data)
       setUnreadNotifCount(unread)
+      unreadNotifCountRef.current = unread
 
       if (unread > prevUnread && prevUnread !== 0) {
         playPopSound()
@@ -575,6 +753,7 @@ const loadNotifications = async (userId) => {
     setSinglePostId(null)
     setViewedUserId(null)
     setSearchTerm('')
+    if (session?.user?.id) loadNotifications(session.user.id)
     markNotificationsAsRead()
   }
 
@@ -633,7 +812,7 @@ const loadNotifications = async (userId) => {
     setSuccessMsg('')
 
 const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://lekhoweb.vercel.app'
+      redirectTo: `${window.location.origin}`
     })
 
     if (error) {
@@ -676,9 +855,22 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
     if (!window.confirm(confirmText)) return
 
     const userId = session.user.id
+
+    await Promise.all([
+      supabase.from('notifications').delete().or(`user_id.eq.${userId},actor_id.eq.${userId}`),
+      supabase.from('bookmarks').delete().eq('user_id', userId),
+      supabase.from('likes').delete().eq('user_id', userId),
+      supabase.from('comments').delete().eq('user_id', userId),
+      supabase.from('post_views').delete().eq('user_id', userId),
+      supabase.from('follows').delete().or(`follower_id.eq.${userId},following_id.eq.${userId}`),
+      supabase.from('profile_notes').delete().eq('user_id', userId),
+      supabase.from('reports').delete().eq('reporter_id', userId),
+      supabase.from('feedbacks').delete().eq('user_id', userId),
+    ])
+
     await supabase.from('posts').delete().eq('author_id', userId)
     await supabase.from('profiles').delete().eq('id', userId)
-    
+
     await supabase.auth.signOut()
     showToast(lang === 'bn' ? 'অ্যাকাউন্ট মুছে ফেলা হয়েছে।' : 'Account deleted.', 'info')
   }
@@ -698,7 +890,10 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
     window.history.pushState({}, '', window.location.pathname)
   }
 
-  if (loading) return <p style={{ textAlign: 'center', marginTop: '50px', color: '#888' }}>Loading...</p>
+  if (loading) {
+    const bootDark = (localStorage.getItem('lekho_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark'
+    return <AppBootLoader isDark={bootDark} />
+  }
 
   if (isPasswordRecovery) {
     return (
@@ -872,6 +1067,13 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.35; }
+        }
+        @keyframes lekhoSpin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes lekhoFadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         @keyframes slideIn {
           from { transform: translateY(-20px); opacity: 0; }
@@ -1067,7 +1269,14 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
               padding: '16px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
             }}>
-              {notifications.length === 0 ? (
+              {notificationsLoading && notifications.length === 0 ? (
+                <div>
+                  <SkeletonNotificationRow colors={colors} isDark={isDark} />
+                  <SkeletonNotificationRow colors={colors} isDark={isDark} />
+                  <SkeletonNotificationRow colors={colors} isDark={isDark} />
+                  <SkeletonNotificationRow colors={colors} isDark={isDark} />
+                </div>
+              ) : notifications.length === 0 ? (
                 <p style={{ textAlign: 'center', color: colors.textMuted, fontSize: '14px', margin: '40px 0' }}>
                   {lang === 'bn' ? 'কোনো নোটিফিকেশন নেই।' : 'No notifications yet.'}
                 </p>
@@ -1096,8 +1305,11 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
                           borderRadius: '10px',
                           background: n.is_read ? (isDark ? '#191a1d' : '#ffffff') : (isDark ? '#25262c' : '#f1f5f9'),
                           cursor: 'pointer',
-                          border: `1px solid ${colors.cardBorder}`
+                          border: `1px solid ${colors.cardBorder}`,
+                          transition: 'background 0.2s ease, transform 0.15s ease',
                         }}
+                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
                       >
                         {actor?.avatar_url ? (
                           <img src={actor.avatar_url} alt="" style={{ width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0, border: '1.5px solid #0066cc' }} />
@@ -1109,10 +1321,18 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
                         <div style={{ flex: 1, fontSize: '14px', textAlign: 'left' }}>
                           <strong style={{ color: '#0066cc' }}>{actorName}</strong>{' '}
                           <span style={{ color: colors.text }}>{text}</span>
+                          {n.posts?.title && (
+                            <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              “{n.posts.title}”
+                            </div>
+                          )}
                           <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '4px' }}>
                             {formatDateTime(n.created_at, lang)}
                           </div>
                         </div>
+                        {!n.is_read && (
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0066cc', flexShrink: 0 }} />
+                        )}
                       </div>
                     )
                   })}
@@ -1665,16 +1885,23 @@ function Feed({ session, lang, colors, isDark, searchTerm, viewMode, feedTab, si
           .or(`name.ilike.%${usernameQuery}%,full_name.ilike.%${usernameQuery}%`)
           .limit(5)
 
-        if (matchedUsers && matchedUsers.length > 0) {
+          if (matchedUsers && matchedUsers.length > 0) {
           setUserResults(matchedUsers)
           const userIds = matchedUsers.map(u => u.id)
 
           const { data } = await supabase
             .from('posts')
             .select('*, profiles(name, full_name, avatar_url), likes(type), comments(id), post_views(id)')
+            .in('author_id', userIds)
+            .order('created_at', { ascending: false })
+            .limit(40)
 
           const ranked = applySmartRanking(data || [])
           setPosts(ranked)
+          setHasMore(false)
+        } else {
+          setUserResults([])
+          setPosts([])
           setHasMore(false)
         }
         setLoading(false)
@@ -1732,10 +1959,11 @@ function Feed({ session, lang, colors, isDark, searchTerm, viewMode, feedTab, si
       const to = from + POSTS_PER_PAGE - 1
 
       const { data, error } = await supabase
-  .from('posts')
-  .select('*, profiles(name, full_name, avatar_url), likes(type), comments(id)')
-  .order('created_at', { ascending: false })
-  .range(from, to);
+        .from('posts')
+        .select('*, profiles(name, full_name, avatar_url), likes(type), comments(id)')
+        .in('author_id', followingIds)
+        .order('created_at', { ascending: false })
+        .range(from, to)
 
       if (!error) {
         const newPosts = data || []
@@ -1841,7 +2069,8 @@ function Feed({ session, lang, colors, isDark, searchTerm, viewMode, feedTab, si
           ))}
 
           {loadingMore && (
-            <div style={{ textAlign: 'center', margin: '20px 0', color: colors.textMuted, fontSize: '13.5px' }}>
+            <div style={{ textAlign: 'center', margin: '20px 0', color: colors.textMuted, fontSize: '13.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <InlineSpinner size={16} />
               {lang === 'bn' ? 'আরও পোস্ট লোড হচ্ছে...' : 'Loading more posts...'}
             </div>
           )}
@@ -2085,37 +2314,53 @@ function PostCard({ post, session, lang, colors, isDark, showToast, onChanged, o
   }
 
 const handleReaction = async (type) => {
+    if (loadingLike) return
     setShowReactionPicker(false)
+    setLoadingLike(true)
     const prevReaction = myReaction
 
     setPopEffect(true)
     setTimeout(() => setPopEffect(false), 300)
 
-    await supabase
+    const { error: deleteError } = await supabase
       .from('likes')
       .delete()
       .eq('post_id', post.id)
       .eq('user_id', session.user.id)
 
+    if (deleteError) {
+      setLoadingLike(false)
+      showToast('Error: ' + deleteError.message, 'error')
+      return
+    }
+
     if (prevReaction === type) {
       setMyReaction(null)
     } else {
       setMyReaction(type)
-      await supabase
+      const { error: insertError } = await supabase
         .from('likes')
         .insert({ post_id: post.id, user_id: session.user.id, type })
 
-      // 👉 নতুন রিয়াকশন বা লাইক দিলে নোটিফিকেশন পাঠানো (নিজের পোস্টে নিজে দিলে যাবে না)
+      if (insertError) {
+        setMyReaction(prevReaction)
+        setLoadingLike(false)
+        showToast('Error: ' + insertError.message, 'error')
+        return
+      }
+
+      // Client fallback; DB trigger also creates (deduped within 45s)
       if (post.author_id !== session.user.id && (type === 'love' || type === 'insightful')) {
         await supabase.from('notifications').insert({
           user_id: post.author_id,
           actor_id: session.user.id,
-          type: type, // 'love' বা 'insightful'
+          type: type,
           post_id: post.id
         })
       }
     }
-    loadReactions()
+    await loadReactions()
+    setLoadingLike(false)
   }
 
   const startPressTimer = () => {
@@ -2178,9 +2423,11 @@ const handleAddComment = async (e) => {
 
   const handleAddReply = async (e, parentId) => {
     e.preventDefault()
-    if (!replyText.trim()) return
+    if (!replyText.trim() || postingReply) return
 
     setPostingReply(true)
+
+    const parentComment = comments.find(c => c.id === parentId)
 
     const { error } = await supabase.from('comments').insert({
       post_id: post.id,
@@ -2195,6 +2442,30 @@ const handleAddComment = async (e) => {
       setReplyText('')
       setReplyingToId(null)
       loadComments()
+
+      // Notify parent comment author (DB trigger also fires; deduped)
+      const replyTargetId = parentComment?.user_id
+      if (replyTargetId && replyTargetId !== session.user.id) {
+        await supabase.from('notifications').insert({
+          user_id: replyTargetId,
+          actor_id: session.user.id,
+          type: 'reply',
+          post_id: post.id
+        })
+      }
+
+      // Also notify post author if different from reply target
+      if (
+        post.author_id !== session.user.id &&
+        post.author_id !== replyTargetId
+      ) {
+        await supabase.from('notifications').insert({
+          user_id: post.author_id,
+          actor_id: session.user.id,
+          type: 'comment',
+          post_id: post.id
+        })
+      }
     } else {
       showToast('Error: ' + error.message, 'error')
     }
@@ -2439,14 +2710,24 @@ const handleAddComment = async (e) => {
           )}
 
           {!isReply && (
-            <div style={{ marginTop: '4px', marginLeft: '32px', textAlign: 'left' }}>
+            <div style={{ marginTop: '6px', marginLeft: '32px', textAlign: 'left' }}>
               <button
                 type="button"
                 onClick={() => {
                   setReplyingToId(replyingToId === c.id ? null : c.id)
                   setReplyText('')
                 }}
-                style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', fontSize: '12px', padding: 0, fontWeight: '600' }}
+                style={{
+                  background: replyingToId === c.id ? (isDark ? '#25262a' : '#eef2ff') : 'none',
+                  border: 'none',
+                  color: replyingToId === c.id ? '#0066cc' : colors.textMuted,
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  fontWeight: '600',
+                  transition: 'color 0.15s, background 0.15s'
+                }}
               >
                 {lang === 'bn' ? 'রিপ্লাই দিন' : 'Reply'}
               </button>
@@ -2455,19 +2736,74 @@ const handleAddComment = async (e) => {
         </div>
 
         {replyingToId === c.id && (
-          <form onSubmit={(e) => handleAddReply(e, c.id)} style={{ display: 'flex', gap: '6px', margin: '6px 0 6px 18px' }}>
+          <form
+            onSubmit={(e) => handleAddReply(e, c.id)}
+            style={{
+              display: 'flex',
+              gap: '8px',
+              margin: '8px 0 8px 28px',
+              padding: '8px',
+              background: isDark ? '#141518' : '#f8fafc',
+              borderRadius: '10px',
+              border: `1px solid ${colors.cardBorder}`,
+              alignItems: 'center',
+              animation: 'lekhoFadeIn 0.2s ease'
+            }}
+          >
             <input
               type="text"
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder={lang === 'bn' ? 'রিপ্লাই লিখুন...' : 'Write a reply...'}
-              style={{ flex: 1, padding: '6px 10px', fontSize: '13px', background: colors.inputBg, color: colors.text, border: `1px solid ${colors.inputBorder}`, borderRadius: '6px', textAlign: 'left' }}
+              autoFocus
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                fontSize: '13.5px',
+                background: colors.inputBg,
+                color: colors.text,
+                border: `1px solid ${colors.inputBorder}`,
+                borderRadius: '8px',
+                textAlign: 'left',
+                minHeight: '38px'
+              }}
               required
             />
-            <button type="submit" disabled={postingReply} style={{ padding: '4px 10px', fontSize: '12px', background: '#0066cc', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}>
+            <button
+              type="submit"
+              disabled={postingReply}
+              style={{
+                padding: '8px 14px',
+                fontSize: '12.5px',
+                background: '#0066cc',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                minHeight: '38px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: postingReply ? 'wait' : 'pointer'
+              }}
+            >
+              {postingReply ? <InlineSpinner size={14} color="#fff" /> : null}
               {postingReply ? '...' : (lang === 'bn' ? 'পাঠান' : 'Reply')}
             </button>
-            <button type="button" onClick={() => setReplyingToId(null)} style={{ padding: '4px 8px', fontSize: '12px', background: isDark ? '#444' : '#cbd5e1', color: colors.text, border: 'none', borderRadius: '6px' }}>
+            <button
+              type="button"
+              onClick={() => setReplyingToId(null)}
+              style={{
+                padding: '8px 10px',
+                fontSize: '12px',
+                background: isDark ? '#2a2b30' : '#e2e8f0',
+                color: colors.text,
+                border: 'none',
+                borderRadius: '8px',
+                minHeight: '38px',
+                cursor: 'pointer'
+              }}
+            >
               ✕
             </button>
           </form>
@@ -2587,7 +2923,13 @@ const handleAddComment = async (e) => {
                 <button
                   type="button"
                   onClick={() => { setShowRepostModal(true); setShowPostMenu(false) }}
-                  style={{ display: 'block', width: '100%', background: 'none', border: 'none', color: colors.text, padding: '8px 14px', textAlign: 'left', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
+                  style={{
+                    display: 'block', width: '100%', background: 'none', border: 'none', color: colors.text,
+                    padding: '10px 14px', textAlign: 'left', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
+                    transition: 'background 0.15s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? '#25262a' : '#f1f5f9' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
                 >
                   🔁 {lang === 'bn' ? 'ক্যাপশন সহ শেয়ার (Repost)' : 'Repost with Caption'}
                 </button>
@@ -2595,7 +2937,13 @@ const handleAddComment = async (e) => {
                 <button
                   type="button"
                   onClick={handleShare}
-                  style={{ display: 'block', width: '100%', background: 'none', border: 'none', color: colors.text, padding: '8px 14px', textAlign: 'left', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}
+                  style={{
+                    display: 'block', width: '100%', background: 'none', border: 'none', color: colors.text,
+                    padding: '10px 14px', textAlign: 'left', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
+                    transition: 'background 0.15s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? '#25262a' : '#f1f5f9' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
                 >
                   📤 {lang === 'bn' ? 'লিংক কপি / শেয়ার' : 'Copy Link / Share'}
                 </button>
@@ -2926,10 +3274,21 @@ const handleAddComment = async (e) => {
                 onChange={(e) => setRepostCaption(e.target.value)}
                 placeholder={lang === 'bn' ? 'এই পোস্ট সম্পর্কে আপনার ভাবনা লিখুন (ঐচ্ছিক)...' : 'Write your thoughts about this post...'}
                 rows={3}
-                style={{ width: '100%', padding: '10px', background: colors.inputBg, color: colors.text, border: `1px solid ${colors.inputBorder}`, borderRadius: '8px', boxSizing: 'border-box', marginBottom: '14px', fontSize: '14px', fontFamily: 'inherit', textAlign: 'left' }}
+                autoFocus
+                style={{
+                  width: '100%', padding: '12px', background: colors.inputBg, color: colors.text,
+                  border: `1px solid ${colors.inputBorder}`, borderRadius: '10px', boxSizing: 'border-box',
+                  marginBottom: '12px', fontSize: '14.5px', fontFamily: 'inherit', textAlign: 'left',
+                  lineHeight: 1.5, resize: 'vertical', minHeight: '88px'
+                }}
               />
 
-              <div style={{ background: isDark ? '#121316' : '#f1f5f9', padding: '10px', borderRadius: '8px', border: `1px solid ${colors.cardBorder}`, marginBottom: '16px', fontSize: '13px', color: colors.textMuted, maxHeight: '90px', overflow: 'hidden' }}>
+              <div style={{
+                background: isDark ? '#121316' : '#f1f5f9', padding: '12px', borderRadius: '10px',
+                border: `1px solid ${colors.cardBorder}`, marginBottom: '16px', fontSize: '13px',
+                color: colors.textMuted, maxHeight: '100px', overflow: 'hidden',
+                borderLeft: '3px solid #0066cc'
+              }}>
                 <strong style={{ color: colors.text }}>@{post.profiles?.full_name || post.profiles?.name || 'User'}:</strong> {post.content}
               </div>
 
@@ -2944,8 +3303,13 @@ const handleAddComment = async (e) => {
                 <button
                   type="submit"
                   disabled={reposting}
-                  style={{ padding: '8px 20px', background: '#0066cc', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13.5px', minHeight: '38px' }}
+                  style={{
+                    padding: '8px 20px', background: '#0066cc', color: '#fff', border: 'none', borderRadius: '8px',
+                    fontWeight: 'bold', cursor: reposting ? 'wait' : 'pointer', fontSize: '13.5px', minHeight: '38px',
+                    display: 'inline-flex', alignItems: 'center', gap: '8px'
+                  }}
                 >
+                  {reposting ? <InlineSpinner size={14} color="#fff" /> : null}
                   {reposting ? '...' : (lang === 'bn' ? 'টাইমলাইনে শেয়ার করুন' : 'Share to Timeline')}
                 </button>
               </div>
