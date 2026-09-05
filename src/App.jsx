@@ -530,16 +530,20 @@ function App() {
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  const loadNotifications = async (userId) => {
+const loadNotifications = async (userId) => {
     const uid = userId || session?.user?.id
     if (!uid) return
 
-const { data, error } = await supabase
-  .from('notifications')
-  .select('*')
-  .eq('user_id', uid)
-  .order('created_at', { ascending: false })
-  .limit(50)
+    const { data } = await supabase
+      .from('notifications')
+      .select(`
+        *,
+        profiles:actor_id (name, full_name, avatar_url),
+        posts (title)
+      `)
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(50)
 
     if (data) {
       const prevUnread = unreadNotifCount
