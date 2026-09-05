@@ -632,8 +632,8 @@ const loadNotifications = async (userId) => {
     setErrorMsg('')
     setSuccessMsg('')
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin
+const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://lekhoweb.vercel.app'
     })
 
     if (error) {
