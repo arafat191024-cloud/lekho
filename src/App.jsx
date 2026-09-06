@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback, useMemo, memo }
-import { translations } from './translations'
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
+import { translations } from './translations';
 import { supabase } from './supabaseClient'
 import { containsProfanity } from './profanityFilter'
 import ProfilePage from './ProfilePage'
@@ -3524,18 +3524,22 @@ function AdminDashboardModal({ lang, colors, showToast, onClose, onRefreshFeed, 
     return () => clearInterval(interval)
   }, [])
 
-  const loadData = async (showLoading = false) => {
+const loadData = async (showLoading = false) => {
     if (showLoading) setLoading(true)
 
-    const { data: fbData } = await supabase
+    const { data: fbData, error: fbError } = await supabase
       .from('feedbacks')
-      .select('*, profiles:user_id(name, full_name, avatar_url)')
+      .select('*')
       .order('created_at', { ascending: false })
 
-    const { data: repData } = await supabase
+    if (fbError) console.error('Feedback error:', fbError)
+
+    const { data: repData, error: repError } = await supabase
       .from('reports')
-      .select('*, posts(*, profiles(name, full_name, avatar_url)), profiles:reporter_id(name, full_name)')
+      .select('*')
       .order('created_at', { ascending: false })
+
+    if (repError) console.error('Report error:', repError)
 
     setFeedbacks(fbData || [])
     setReports(repData || [])
