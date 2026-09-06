@@ -2446,13 +2446,11 @@ const handleAddComment = async (e) => {
     }
   }
 
-  const handleAddReply = async (e, parentId) => {
+const handleAddReply = async (e, parentId) => {
     e.preventDefault()
     if (!replyText.trim() || postingReply) return
 
     setPostingReply(true)
-
-    const parentComment = comments.find(c => c.id === parentId)
 
     const { error } = await supabase.from('comments').insert({
       post_id: post.id,
@@ -2467,30 +2465,6 @@ const handleAddComment = async (e) => {
       setReplyText('')
       setReplyingToId(null)
       loadComments()
-
-      // Notify parent comment author (DB trigger also fires; deduped)
-      const replyTargetId = parentComment?.user_id
-      if (replyTargetId && replyTargetId !== session.user.id) {
-        await supabase.from('notifications').insert({
-          user_id: replyTargetId,
-          actor_id: session.user.id,
-          type: 'reply',
-          post_id: post.id
-        })
-      }
-
-      // Also notify post author if different from reply target
-      if (
-        post.author_id !== session.user.id &&
-        post.author_id !== replyTargetId
-      ) {
-        await supabase.from('notifications').insert({
-          user_id: post.author_id,
-          actor_id: session.user.id,
-          type: 'comment',
-          post_id: post.id
-        })
-      }
     } else {
       showToast('Error: ' + error.message, 'error')
     }
@@ -2529,7 +2503,6 @@ const handleAddComment = async (e) => {
       loadComments()
     }
   }
-
   const recordView = async () => {
     const { data: existing } = await supabase
       .from('post_views')
