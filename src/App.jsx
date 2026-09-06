@@ -3525,7 +3525,7 @@ function AdminDashboardModal({ lang, colors, showToast, onClose, onRefreshFeed, 
     return () => clearInterval(interval)
   }, [])
 
-const loadData = async (showLoading = false) => {
+  const loadData = async (showLoading = false) => {
     if (showLoading) setLoading(true)
 
     const { data: fbData, error: fbError } = await supabase
@@ -3736,4 +3736,4 @@ const loadData = async (showLoading = false) => {
   )
 }
 
-export default App
+export default App;
