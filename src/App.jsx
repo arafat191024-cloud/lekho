@@ -516,6 +516,7 @@ function App() {
 
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
 
   const navMenuRef = useRef(null)
 
